@@ -37,13 +37,15 @@ class Letter {
   Letter({required this.char, required this.selected});
 }
 
-typedef void LetterCallBack(Letter val);
+typedef LetterCallBack = void Function(Letter val);
 
 // ignore: must_be_immutable
 class LetterBox extends StatefulWidget {
   String character;
   final LetterCallBack callback;
-  LetterBox({super.key, required this.character, required this.callback});
+  bool selected = false;
+  LetterBox(
+      {super.key, required this.character, required this.callback, selected});
 
   @override
   State<LetterBox> createState() => _LetterBoxState();
@@ -53,12 +55,11 @@ class _LetterBoxState extends State<LetterBox> {
   String emptyCharacter = "";
   String emptyIndicator = "-";
   bool useable = false;
-  bool selected = false;
   int colorsValue = 100;
 
   void selectedToggle() {
     setState(() {
-      selected = selected == false ? true : false;
+      widget.selected = widget.selected == false ? true : false;
     });
   }
 
@@ -68,14 +69,15 @@ class _LetterBoxState extends State<LetterBox> {
     return GestureDetector(
       onTap: () {
         setState(() {
-          selected = selected == false ? true : false;
-          colorsValue = selected ? 400 : 100;
+          widget.selected = widget.selected == false ? true : false;
+          colorsValue = widget.selected ? 400 : 100;
         });
-        widget.callback(Letter(char: widget.character, selected: selected));
+        widget.callback(
+            Letter(char: widget.character, selected: widget.selected));
       },
       child: Container(
         padding: const EdgeInsets.all(8),
-        color: useable ? Colors.teal[colorsValue] : Colors.white,
+        color: widget.selected ? Colors.teal[colorsValue] : Colors.white,
         child: Center(
             child: Text(
           widget.character == emptyIndicator
@@ -155,6 +157,7 @@ class _MyHomePageState extends State<MyHomePage> {
           letterBoxes.replaceRange(box, box + 1, [
             LetterBox(
               character: letter,
+              selected: false,
               callback: (val) => addLetterToWord(val),
             )
           ]);
@@ -246,7 +249,7 @@ class _MyHomePageState extends State<MyHomePage> {
         callback: (val) => addLetterToWord(val),
       )
     ];
-    var period = const Duration(seconds: 5);
+    var period = const Duration(seconds: 1);
     timer = Timer.periodic(period, (arg) {
       setLetterInList();
     });
@@ -258,47 +261,54 @@ class _MyHomePageState extends State<MyHomePage> {
     timer.cancel();
   }
 
+  void handleSubmit() {
+    for (int i = 0; i < letterBoxes.length; i++) {
+      var letterBox = letterBoxes[i];
+
+      if (letterBox.selected) {
+        setState(() {
+          letterBoxes.replaceRange(i, i + 1, [
+            LetterBox(
+                character: "-",
+                selected: false,
+                callback: (val) => addLetterToWord(val))
+          ]);
+        });
+      }
+    }
+    setState(() {
+      lettersInWord.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       body: SafeArea(
-        child: Column(
-            // Center is a layout widget. It takes a single child and positions it
-            // in the middle of the parent.
-            children: [
-              Expanded(
-                  child: GridView.count(
-                primary: false,
-                padding: const EdgeInsets.all(20),
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                crossAxisCount: 4,
-                children: [...letterBoxes],
-              )),
-              Text(
-                lettersInWord.join(""),
-                style: const TextStyle(
-                    fontSize: 40.0, fontWeight: FontWeight.bold),
-              ),
-              Padding(
-                padding: EdgeInsets.all(30),
-                child: OutlinedButton(
-                  child: Text("Submit"),
-                  onPressed: () {
-                    print("SUBMIT");
-                    for (LetterBox letterBox in letterBoxes) {
-                      if (lettersInWord.contains(letterBox.character)) {}
-                    }
-                  },
-                ),
-              )
-            ]),
+        child: Column(children: [
+          Expanded(
+              child: GridView.count(
+            primary: false,
+            padding: const EdgeInsets.all(20),
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            crossAxisCount: 4,
+            children: [...letterBoxes],
+          )),
+          Text(
+            lettersInWord.join(""),
+            style: const TextStyle(fontSize: 40.0, fontWeight: FontWeight.bold),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(30),
+            child: OutlinedButton(
+              child: const Text("Submit"),
+              onPressed: () {
+                handleSubmit();
+              },
+            ),
+          )
+        ]),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
