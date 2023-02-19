@@ -31,10 +31,19 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class Letter {
+  late String char;
+  bool selected = false;
+  Letter({required this.char, required this.selected});
+}
+
+typedef void LetterCallBack(Letter val);
+
 // ignore: must_be_immutable
 class LetterBox extends StatefulWidget {
   String character;
-  LetterBox({super.key, required this.character});
+  final LetterCallBack callback;
+  LetterBox({super.key, required this.character, required this.callback});
 
   @override
   State<LetterBox> createState() => _LetterBoxState();
@@ -44,15 +53,25 @@ class _LetterBoxState extends State<LetterBox> {
   String emptyCharacter = "";
   String emptyIndicator = "-";
   bool useable = false;
+  bool selected = false;
   int colorsValue = 100;
+
+  void selectedToggle() {
+    setState(() {
+      selected = selected == false ? true : false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     useable = widget.character != emptyIndicator;
     return GestureDetector(
       onTap: () {
         setState(() {
-          widget.character = emptyIndicator;
+          selected = selected == false ? true : false;
+          colorsValue = selected ? 400 : 100;
         });
+        widget.callback(Letter(char: widget.character, selected: selected));
       },
       child: Container(
         padding: const EdgeInsets.all(8),
@@ -117,26 +136,11 @@ class _MyHomePageState extends State<MyHomePage> {
     "Z",
   ];
 
-  List<LetterBox> letterBoxes = [
-    LetterBox(character: "-"),
-    LetterBox(character: "-"),
-    LetterBox(character: "-"),
-    LetterBox(character: "-"),
-    LetterBox(character: "-"),
-    LetterBox(character: "-"),
-    LetterBox(character: "-"),
-    LetterBox(character: "-"),
-    LetterBox(character: "-"),
-    LetterBox(character: "-"),
-    LetterBox(character: "-"),
-    LetterBox(character: "-"),
-    LetterBox(character: "-"),
-    LetterBox(character: "-"),
-    LetterBox(character: "-"),
-    LetterBox(character: "-")
-  ];
+  late List<LetterBox> letterBoxes;
   late Timer timer;
   Random randomLetterBoxIndex = Random();
+
+  List<String> lettersInWord = [];
 
   void setLetterInList() {
     int index = randomLetterBoxIndex.nextInt(25);
@@ -146,26 +150,103 @@ class _MyHomePageState extends State<MyHomePage> {
     int attempts = 0;
     int maxAttempts = 16;
     setState(() {
-      //letterBoxes[box].character = letter;
       do {
         if (letterBoxes[box].character == "-") {
-          letterBoxes
-              .replaceRange(box, box + 1, [LetterBox(character: letter)]);
+          letterBoxes.replaceRange(box, box + 1, [
+            LetterBox(
+              character: letter,
+              callback: (val) => addLetterToWord(val),
+            )
+          ]);
           assigned = true;
         } else {
-          print("$box is taken");
           box = randomLetterBoxIndex.nextInt(16);
         }
         attempts++;
       } while (assigned == false && attempts < maxAttempts);
-      print(letter);
+    });
+  }
+
+  void addLetterToWord(Letter letter) {
+    setState(() {
+      if (letter.selected) {
+        lettersInWord.add(letter.char);
+      } else {
+        lettersInWord.remove(letter.char);
+      }
     });
   }
 
   @override
   void initState() {
     super.initState();
-    var period = const Duration(seconds: 1);
+    letterBoxes = [
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      ),
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      ),
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      ),
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      ),
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      ),
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      ),
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      ),
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      ),
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      ),
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      ),
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      ),
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      ),
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      ),
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      ),
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      ),
+      LetterBox(
+        character: "-",
+        callback: (val) => addLetterToWord(val),
+      )
+    ];
+    var period = const Duration(seconds: 5);
     timer = Timer.periodic(period, (arg) {
       setLetterInList();
     });
@@ -187,24 +268,37 @@ class _MyHomePageState extends State<MyHomePage> {
     // than having to individually change instances of widgets.
     return Scaffold(
       body: SafeArea(
-        child: Center(
+        child: Column(
             // Center is a layout widget. It takes a single child and positions it
             // in the middle of the parent.
-            child: GridView.count(
-          primary: false,
-          padding: const EdgeInsets.all(20),
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          crossAxisCount: 4,
-          children: [...letterBoxes],
-        )),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          print("pressed");
-        },
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+            children: [
+              Expanded(
+                  child: GridView.count(
+                primary: false,
+                padding: const EdgeInsets.all(20),
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                crossAxisCount: 4,
+                children: [...letterBoxes],
+              )),
+              Text(
+                lettersInWord.join(""),
+                style: const TextStyle(
+                    fontSize: 40.0, fontWeight: FontWeight.bold),
+              ),
+              Padding(
+                padding: EdgeInsets.all(30),
+                child: OutlinedButton(
+                  child: Text("Submit"),
+                  onPressed: () {
+                    print("SUBMIT");
+                    for (LetterBox letterBox in letterBoxes) {
+                      if (lettersInWord.contains(letterBox.character)) {}
+                    }
+                  },
+                ),
+              )
+            ]),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
