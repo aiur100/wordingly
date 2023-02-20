@@ -302,10 +302,20 @@ class _MyHomePageState extends State<MyHomePage> {
           Padding(
             padding: const EdgeInsets.all(30),
             child: OutlinedButton(
-              child: const Text("Submit"),
+              style: ButtonStyle(
+                backgroundColor: MaterialStatePropertyAll<Color>(
+                    Theme.of(context).colorScheme.secondary),
+                fixedSize: MaterialStateProperty.all(Size(140.0, 50.0)),
+                // ignore: prefer_const_constructors
+                textStyle: MaterialStatePropertyAll<TextStyle>(
+                    const TextStyle(color: Colors.white)),
+              ),
               onPressed: () {
                 handleSubmit();
               },
+              child: const Text("Submit",
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           )
         ]),
