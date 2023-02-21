@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:convert';
 import 'dart:async';
 import 'dart:math';
 
-void main() {
+late List<dynamic> wordDictionary;
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  var data = await rootBundle.loadString('assets/words.json');
+  wordDictionary = jsonDecode(data);
   runApp(const MyApp());
 }
 
@@ -111,30 +118,112 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   List<String> availableLetters = [
     "A",
+    "A",
+    "A",
+    "A",
+    "A",
+    "A",
     "B",
     "C",
     "D",
+    "D",
+    "D",
+    "D",
+    "D",
+    "D",
+    "D",
+    "D",
+    "E",
+    "E",
+    "E",
+    "E",
+    "E",
+    "E",
+    "E",
+    "E",
+    "E",
+    "E",
+    "E",
+    "E",
     "E",
     "F",
     "G",
+    "G",
+    "G",
     "H",
+    "H",
+    "H",
+    "H",
+    "H",
+    "H",
+    "H",
+    "H",
+    "H",
+    "H",
+    "H",
+    "I",
+    "I",
+    "I",
+    "I",
+    "I",
+    "I",
     "I",
     "J",
     "K",
     "L",
     "M",
     "N",
+    "N",
+    "N",
+    "N",
+    "O",
+    "O",
+    "O",
+    "O",
+    "O",
+    "O",
+    "O",
+    "O",
+    "O",
+    "O",
     "O",
     "P",
     "Q",
     "R",
+    "R",
+    "R",
+    "R",
+    "R",
+    "R",
+    "R",
+    "R",
+    "R",
+    "R",
+    "R",
+    "R",
+    "R",
+    "R",
+    "R",
+    "S",
+    "S",
+    "S",
+    "S",
+    "S",
+    "S",
+    "S",
+    "S",
     "S",
     "T",
     "U",
     "V",
+    "V",
+    "V",
     "W",
     "X",
     "Y",
+    "Z",
+    "Z",
+    "Z",
     "Z",
   ];
 
@@ -145,7 +234,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<String> lettersInWord = [];
 
   void setLetterInList() {
-    int index = randomLetterBoxIndex.nextInt(25);
+    int index = randomLetterBoxIndex.nextInt(availableLetters.length);
     int box = randomLetterBoxIndex.nextInt(16);
     String letter = availableLetters[index];
     bool assigned = false;
@@ -261,7 +350,16 @@ class _MyHomePageState extends State<MyHomePage> {
     timer.cancel();
   }
 
+  Color wordColor = Colors.black;
+
   void handleSubmit() {
+    String wordToCheck = lettersInWord.join("").toLowerCase();
+    if (wordDictionary.contains(wordToCheck) == false) {
+      setState(() {
+        wordColor = Colors.red;
+      });
+      return;
+    }
     for (int i = 0; i < letterBoxes.length; i++) {
       var letterBox = letterBoxes[i];
 
@@ -278,6 +376,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     setState(() {
       lettersInWord.clear();
+      wordColor = Colors.black;
     });
   }
 
@@ -297,7 +396,8 @@ class _MyHomePageState extends State<MyHomePage> {
           )),
           Text(
             lettersInWord.join(""),
-            style: const TextStyle(fontSize: 40.0, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                fontSize: 40.0, fontWeight: FontWeight.bold, color: wordColor),
           ),
           Padding(
             padding: const EdgeInsets.all(30),
