@@ -338,7 +338,7 @@ class _MyHomePageState extends State<MyHomePage> {
         callback: (val) => addLetterToWord(val),
       )
     ];
-    var period = const Duration(seconds: 1);
+    var period = const Duration(seconds: 3);
     timer = Timer.periodic(period, (arg) {
       setLetterInList();
     });
