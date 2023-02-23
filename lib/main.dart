@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:word_game/letter_box.dart';
+import 'package:word_game/letters.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'dart:math';
@@ -38,65 +40,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class Letter {
-  late String char;
-  bool selected = false;
-  Letter({required this.char, required this.selected});
-}
-
-typedef LetterCallBack = void Function(Letter val);
-
-// ignore: must_be_immutable
-class LetterBox extends StatefulWidget {
-  String character;
-  final LetterCallBack callback;
-  bool selected = false;
-  LetterBox(
-      {super.key, required this.character, required this.callback, selected});
-
-  @override
-  State<LetterBox> createState() => _LetterBoxState();
-}
-
-class _LetterBoxState extends State<LetterBox> {
-  String emptyCharacter = "";
-  String emptyIndicator = "-";
-  bool useable = false;
-  int colorsValue = 100;
-
-  void selectedToggle() {
-    setState(() {
-      widget.selected = widget.selected == false ? true : false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    useable = widget.character != emptyIndicator;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          widget.selected = widget.selected == false ? true : false;
-          colorsValue = widget.selected ? 400 : 100;
-        });
-        widget.callback(
-            Letter(char: widget.character, selected: widget.selected));
-      },
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        color: widget.selected ? Colors.teal[colorsValue] : Colors.white,
-        child: Center(
-            child: Text(
-          widget.character == emptyIndicator
-              ? emptyCharacter
-              : widget.character,
-          style: const TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
-        )),
-      ),
-    );
-  }
-}
-
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
@@ -116,119 +59,11 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<String> availableLetters = [
-    "A",
-    "A",
-    "A",
-    "A",
-    "A",
-    "A",
-    "B",
-    "C",
-    "D",
-    "D",
-    "D",
-    "D",
-    "D",
-    "D",
-    "D",
-    "D",
-    "E",
-    "E",
-    "E",
-    "E",
-    "E",
-    "E",
-    "E",
-    "E",
-    "E",
-    "E",
-    "E",
-    "E",
-    "E",
-    "F",
-    "G",
-    "G",
-    "G",
-    "H",
-    "H",
-    "H",
-    "H",
-    "H",
-    "H",
-    "H",
-    "H",
-    "H",
-    "H",
-    "H",
-    "I",
-    "I",
-    "I",
-    "I",
-    "I",
-    "I",
-    "I",
-    "J",
-    "K",
-    "L",
-    "M",
-    "N",
-    "N",
-    "N",
-    "N",
-    "O",
-    "O",
-    "O",
-    "O",
-    "O",
-    "O",
-    "O",
-    "O",
-    "O",
-    "O",
-    "O",
-    "P",
-    "Q",
-    "R",
-    "R",
-    "R",
-    "R",
-    "R",
-    "R",
-    "R",
-    "R",
-    "R",
-    "R",
-    "R",
-    "R",
-    "R",
-    "R",
-    "R",
-    "S",
-    "S",
-    "S",
-    "S",
-    "S",
-    "S",
-    "S",
-    "S",
-    "S",
-    "T",
-    "U",
-    "V",
-    "V",
-    "V",
-    "W",
-    "X",
-    "Y",
-    "Z",
-    "Z",
-    "Z",
-    "Z",
-  ];
+  List<String> availableLetters = letters();
 
   late List<LetterBox> letterBoxes;
   late Timer timer;
+
   Random randomLetterBoxIndex = Random();
 
   List<String> lettersInWord = [];
