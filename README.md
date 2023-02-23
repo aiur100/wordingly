@@ -1,16 +1,10 @@
 # word_game
 
-A new Flutter project.
+A grid view slowly fills up with letters.  The player must select letters
+that combine to make works and submit.  Every letter that is successfully used in 
+the creation of a word submission, gets removed from the grid. 
 
-## Getting Started
+The object of the game is to make as many words as possible in order to keep the grid from
+filling up. 
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+As the score increases, and time, the grid fill rate increases.  
