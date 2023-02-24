@@ -4,6 +4,17 @@ import 'package:wordly/letters.dart';
 import 'dart:math';
 import 'dart:async';
 
+var wordLengthPointValues = {3: 1, 4: 1, 5: 2, 6: 3, 7: 5, 8: 11};
+var pointLevelTimeIntervals = {
+  20: 2500,
+  40: 2000,
+  60: 1500,
+  70: 1000,
+  80: 500,
+  100: 250
+};
+var leveNumbers = {20: 1, 40: 2, 60: 3, 70: 4, 80: 5, 100: 6};
+
 class GameBoard extends StatefulWidget {
   const GameBoard(
       {super.key, required this.title, required this.wordDictionary});
@@ -17,6 +28,7 @@ class GameBoard extends StatefulWidget {
 
 class _GameBoardState extends State<GameBoard> {
   List<String> availableLetters = letters();
+  int userPoints = 0;
 
   // letterBoxes is the actual 4x4 game board.
   // the letters in this list represent either empty boxes,
@@ -27,6 +39,8 @@ class _GameBoardState extends State<GameBoard> {
   // board fill timer
   late Timer timer;
 
+  int msPerLetter = 3000;
+
   /// Starting the game by setting a
   /// timer, and putting a letter on the board
   /// periodically according to that timer.
@@ -36,7 +50,7 @@ class _GameBoardState extends State<GameBoard> {
 
     // Add empty letter boxes to the grid.
     letterBoxes = startingLetterBoxes(addLetterToWord);
-    var period = const Duration(seconds: 3);
+    var period = Duration(milliseconds: msPerLetter);
 
     timer = Timer.periodic(period, (arg) {
       putLetterOnBoard();
@@ -66,9 +80,9 @@ class _GameBoardState extends State<GameBoard> {
     bool assigned = false;
     int attempts = 0;
     int maxAttempts = 16;
-    setState(() {
-      do {
-        if (letterBoxes[boxToFillIndex].character == "-") {
+    do {
+      if (letterBoxes[boxToFillIndex].character == "-") {
+        setState(() {
           letterBoxes.replaceRange(boxToFillIndex, boxToFillIndex + 1, [
             LetterBox(
               character: letter,
@@ -76,13 +90,13 @@ class _GameBoardState extends State<GameBoard> {
               callback: (val) => addLetterToWord(val),
             )
           ]);
-          assigned = true;
-        } else {
-          boxToFillIndex = randomNumberGenerator.nextInt(16);
-        }
-        attempts++;
-      } while (assigned == false && attempts < maxAttempts);
-    });
+        });
+        assigned = true;
+      } else {
+        boxToFillIndex = randomNumberGenerator.nextInt(16);
+      }
+      attempts++;
+    } while (assigned == false && attempts < maxAttempts);
   }
 
   // This is used a callback to the LetterBox object
@@ -122,7 +136,9 @@ class _GameBoardState extends State<GameBoard> {
   // so that the user knows that the word submitted is not valid.
   void handleSubmit() {
     String wordToCheck = lettersInCurrentWord.join("").toLowerCase();
-    if (widget.wordDictionary.contains(wordToCheck) == false) {
+    int wordPointValueIndex = wordToCheck.length;
+    if (wordToCheck.length <= 2 &&
+        widget.wordDictionary.contains(wordToCheck) == false) {
       setState(() {
         wordColor = Colors.red;
       });
@@ -130,7 +146,6 @@ class _GameBoardState extends State<GameBoard> {
     }
     for (int i = 0; i < letterBoxes.length; i++) {
       var letterBox = letterBoxes[i];
-
       if (letterBox.selected) {
         setState(() {
           letterBoxes.replaceRange(i, i + 1, [
@@ -143,8 +158,15 @@ class _GameBoardState extends State<GameBoard> {
       }
     }
     setState(() {
-      lettersInCurrentWord.clear();
+      userPoints += wordLengthPointValues[wordPointValueIndex]!;
+      msPerLetter = msPerLetter - 100;
       wordColor = Colors.black;
+      lettersInCurrentWord.clear();
+      timer.cancel();
+      var period = Duration(milliseconds: msPerLetter);
+      timer = Timer.periodic(period, (arg) {
+        putLetterOnBoard();
+      });
     });
   }
 
@@ -162,10 +184,19 @@ class _GameBoardState extends State<GameBoard> {
             crossAxisCount: 4,
             children: [...letterBoxes],
           )),
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Text(
+              lettersInCurrentWord.join(""),
+              style: TextStyle(
+                  fontSize: 40.0,
+                  fontWeight: FontWeight.bold,
+                  color: wordColor),
+            ),
+          ),
           Text(
-            lettersInCurrentWord.join(""),
-            style: TextStyle(
-                fontSize: 40.0, fontWeight: FontWeight.bold, color: wordColor),
+            "Points: $userPoints Speed: ${(msPerLetter / 1000).toStringAsFixed(2)} s/l",
+            style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
           ),
           Padding(
             padding: const EdgeInsets.all(30),
