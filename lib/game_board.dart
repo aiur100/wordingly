@@ -3,17 +3,9 @@ import 'package:wordly/letter_box.dart';
 import 'package:wordly/letters.dart';
 import 'dart:math';
 import 'dart:async';
+import 'package:flutter_animate/flutter_animate.dart';
 
-var wordLengthPointValues = {3: 1, 4: 1, 5: 2, 6: 3, 7: 5, 8: 11};
-var pointLevelTimeIntervals = {
-  20: 2500,
-  40: 2000,
-  60: 1500,
-  70: 1000,
-  80: 500,
-  100: 250
-};
-var leveNumbers = {20: 1, 40: 2, 60: 3, 70: 4, 80: 5, 100: 6};
+final wordLengthPointValues = <int, int>{3: 1, 4: 1, 5: 2, 6: 3, 7: 5, 8: 11};
 
 class GameBoard extends StatefulWidget {
   const GameBoard(
@@ -27,8 +19,13 @@ class GameBoard extends StatefulWidget {
 }
 
 class _GameBoardState extends State<GameBoard> {
-  List<String> availableLetters = letters();
   int userPoints = 0;
+
+  // availableLetters - Available letters in the alphabet
+  // in a list where letters are repeated according to
+  // optimal distribution to enable the user to
+  // generate words effectively.
+  List<String> availableLetters = letters();
 
   // letterBoxes is the actual 4x4 game board.
   // the letters in this list represent either empty boxes,
@@ -37,9 +34,17 @@ class _GameBoardState extends State<GameBoard> {
   late List<LetterBox> letterBoxes;
 
   // board fill timer
-  late Timer timer;
 
+  // time between letter appearances in milliseconds
   int msPerLetter = 3000;
+  int timeToGameOver = 20;
+  int maxGameOverTimer = 20;
+  int minGameOverTimer = 5;
+  bool gameOverImminent = false;
+  bool gameOver = false;
+
+  Timer? timer;
+  Timer? gameOverTimer;
 
   /// Starting the game by setting a
   /// timer, and putting a letter on the board
@@ -50,17 +55,54 @@ class _GameBoardState extends State<GameBoard> {
 
     // Add empty letter boxes to the grid.
     letterBoxes = startingLetterBoxes(addLetterToWord);
-    var period = Duration(milliseconds: msPerLetter);
-
-    timer = Timer.periodic(period, (arg) {
-      putLetterOnBoard();
-    });
+    startGameTimer();
   }
 
   @override
   void dispose() {
     super.dispose();
-    timer.cancel();
+    timer?.cancel();
+  }
+
+  void startGameOverTimer() {
+    print("Game Over Timer Started");
+    var period = const Duration(seconds: 1);
+    gameOverTimer = Timer.periodic(period, (arg) {
+      setState(() {
+        timeToGameOver--;
+        if (timeToGameOver <= 0) {
+          gameOver = true;
+          stopGameOverTimer();
+          stopGameTimer();
+          gameOverImminent = false;
+          return;
+        }
+        if (gameOverImminent == false) {
+          gameOverImminent = true;
+        }
+      });
+    });
+  }
+
+  void stopGameOverTimer() {
+    if (gameOverTimer == null) {
+      return;
+    }
+    gameOverTimer?.cancel();
+    int interval = maxGameOverTimer - minGameOverTimer;
+    maxGameOverTimer =
+        interval < minGameOverTimer ? minGameOverTimer : interval;
+  }
+
+  void stopGameTimer() {
+    timer?.cancel();
+  }
+
+  void startGameTimer() {
+    var period = Duration(milliseconds: msPerLetter);
+    timer = Timer.periodic(period, (arg) {
+      putLetterOnBoard();
+    });
   }
 
   Random randomNumberGenerator = Random();
@@ -75,12 +117,25 @@ class _GameBoardState extends State<GameBoard> {
   // stops trying.
   void putLetterOnBoard() {
     int letterIndex = randomNumberGenerator.nextInt(availableLetters.length);
-    int boxToFillIndex = randomNumberGenerator.nextInt(16);
     String letter = availableLetters[letterIndex];
     bool assigned = false;
     int attempts = 0;
-    int maxAttempts = 16;
+    int maxAttempts = 50;
+    int filledBoxCount = letterBoxes
+        .where(
+          (element) => element.character != "-",
+        )
+        .toList()
+        .length;
+
+    if (filledBoxCount >= 16) {
+      startGameOverTimer();
+      stopGameTimer();
+      return;
+    }
+
     do {
+      int boxToFillIndex = randomNumberGenerator.nextInt(16);
       if (letterBoxes[boxToFillIndex].character == "-") {
         setState(() {
           letterBoxes.replaceRange(boxToFillIndex, boxToFillIndex + 1, [
@@ -92,8 +147,6 @@ class _GameBoardState extends State<GameBoard> {
           ]);
         });
         assigned = true;
-      } else {
-        boxToFillIndex = randomNumberGenerator.nextInt(16);
       }
       attempts++;
     } while (assigned == false && attempts < maxAttempts);
@@ -137,7 +190,7 @@ class _GameBoardState extends State<GameBoard> {
   void handleSubmit() {
     String wordToCheck = lettersInCurrentWord.join("").toLowerCase();
     int wordPointValueIndex = wordToCheck.length;
-    if (wordToCheck.length <= 2 &&
+    if (wordToCheck.length <= 2 ||
         widget.wordDictionary.contains(wordToCheck) == false) {
       setState(() {
         wordColor = Colors.red;
@@ -162,11 +215,9 @@ class _GameBoardState extends State<GameBoard> {
       msPerLetter = msPerLetter - 100;
       wordColor = Colors.black;
       lettersInCurrentWord.clear();
-      timer.cancel();
-      var period = Duration(milliseconds: msPerLetter);
-      timer = Timer.periodic(period, (arg) {
-        putLetterOnBoard();
-      });
+      stopGameOverTimer();
+      stopGameTimer();
+      startGameTimer();
     });
   }
 
@@ -192,12 +243,38 @@ class _GameBoardState extends State<GameBoard> {
                   fontSize: 40.0,
                   fontWeight: FontWeight.bold,
                   color: wordColor),
-            ),
+            ).animate().flip(duration: 500.ms),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: gameOver
+                ? const Text(
+                    "GAME OVER!",
+                    style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20.0),
+                  )
+                : const Text(""),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(50.0),
+            child: gameOverImminent
+                ? Text(
+                    "$timeToGameOver",
+                    style: const TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20.0),
+                  )
+                : const Text(""),
           ),
           Text(
-            "Points: $userPoints Speed: ${(msPerLetter / 1000).toStringAsFixed(2)} s/l",
-            style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+            "Points: $userPoints",
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
           ),
+          Text("Speed: ${(msPerLetter / 1000).toStringAsFixed(2)} s/l"),
           Padding(
             padding: const EdgeInsets.all(30),
             child: OutlinedButton(
