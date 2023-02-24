@@ -6,6 +6,16 @@ class Letter {
   Letter({required this.char, required this.selected});
 }
 
+List<LetterBox> startingLetterBoxes(callback) {
+  return List.filled(
+      16,
+      LetterBox(
+        character: "-",
+        callback: (val) => callback(val),
+      ),
+      growable: true);
+}
+
 typedef LetterCallBack = void Function(Letter val);
 
 // ignore: must_be_immutable
@@ -23,7 +33,6 @@ class LetterBox extends StatefulWidget {
 class _LetterBoxState extends State<LetterBox> {
   String emptyCharacter = "";
   String emptyIndicator = "-";
-  bool useable = false;
   int colorsValue = 100;
 
   void selectedToggle() {
@@ -34,7 +43,6 @@ class _LetterBoxState extends State<LetterBox> {
 
   @override
   Widget build(BuildContext context) {
-    useable = widget.character != emptyIndicator;
     return GestureDetector(
       onTap: () {
         setState(() {
