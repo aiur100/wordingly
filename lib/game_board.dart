@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:wordly/letter_box.dart';
 import 'package:wordly/letters.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:math';
 import 'dart:async';
-import 'package:flutter_animate/flutter_animate.dart';
 
 final wordLengthPointValues = <int, int>{3: 1, 4: 1, 5: 2, 6: 3, 7: 5, 8: 11};
 
@@ -65,7 +65,6 @@ class _GameBoardState extends State<GameBoard> {
   }
 
   void startGameOverTimer() {
-    print("Game Over Timer Started");
     var period = const Duration(seconds: 1);
     gameOverTimer = Timer.periodic(period, (arg) {
       setState(() {
@@ -233,8 +232,31 @@ class _GameBoardState extends State<GameBoard> {
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
             crossAxisCount: 4,
-            children: [...letterBoxes],
+            children: AnimateList(
+              children: [...letterBoxes],
+              effects: [const FlipEffect()],
+              interval: 500.ms,
+            ),
           )),
+          Padding(
+            padding: const EdgeInsets.all(30),
+            child: OutlinedButton(
+              style: ButtonStyle(
+                backgroundColor: MaterialStatePropertyAll<Color>(
+                    Theme.of(context).colorScheme.secondary),
+                fixedSize: MaterialStateProperty.all(const Size(140.0, 50.0)),
+                // ignore: prefer_const_constructors
+                textStyle: MaterialStatePropertyAll<TextStyle>(
+                    const TextStyle(color: Colors.white)),
+              ),
+              onPressed: () {
+                handleSubmit();
+              },
+              child: const Text("Submit",
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(10.0),
             child: Text(
@@ -243,7 +265,7 @@ class _GameBoardState extends State<GameBoard> {
                   fontSize: 40.0,
                   fontWeight: FontWeight.bold,
                   color: wordColor),
-            ).animate().flip(duration: 500.ms),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(10.0),
@@ -275,25 +297,6 @@ class _GameBoardState extends State<GameBoard> {
             style: const TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
           ),
           Text("Speed: ${(msPerLetter / 1000).toStringAsFixed(2)} s/l"),
-          Padding(
-            padding: const EdgeInsets.all(30),
-            child: OutlinedButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStatePropertyAll<Color>(
-                    Theme.of(context).colorScheme.secondary),
-                fixedSize: MaterialStateProperty.all(const Size(140.0, 50.0)),
-                // ignore: prefer_const_constructors
-                textStyle: MaterialStatePropertyAll<TextStyle>(
-                    const TextStyle(color: Colors.white)),
-              ),
-              onPressed: () {
-                handleSubmit();
-              },
-              child: const Text("Submit",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          )
         ]),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
