@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:wordly/letter_box.dart';
 import 'package:wordly/letters.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
 import 'dart:async';
 
@@ -19,6 +20,11 @@ class GameBoard extends StatefulWidget {
 }
 
 class _GameBoardState extends State<GameBoard> {
+  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+
+  int? _highestScoreValue = 0;
+  int? _lastHighestScoreValue = 0;
+
   int userPoints = 0;
 
   // availableLetters - Available letters in the alphabet
@@ -46,6 +52,13 @@ class _GameBoardState extends State<GameBoard> {
   Timer? timer;
   Timer? gameOverTimer;
 
+  String highScoreSharedPrefKey = "high_score";
+
+  _storeHighestScore(int scoreNow) async {
+    final SharedPreferences prefs = await _prefs;
+    await prefs.setInt(highScoreSharedPrefKey, scoreNow);
+  }
+
   /// Starting the game by setting a
   /// timer, and putting a letter on the board
   /// periodically according to that timer.
@@ -56,6 +69,13 @@ class _GameBoardState extends State<GameBoard> {
     // Add empty letter boxes to the grid.
     letterBoxes = startingLetterBoxes(addLetterToWord);
     startGameTimer();
+
+    _prefs.then((SharedPreferences prefs) {
+      setState(() {
+        _highestScoreValue = prefs.getInt(highScoreSharedPrefKey) ?? 0;
+        _lastHighestScoreValue = _highestScoreValue;
+      });
+    });
   }
 
   @override
@@ -174,6 +194,16 @@ class _GameBoardState extends State<GameBoard> {
     });
   }
 
+  Text highScoreText() {
+    if (userPoints > _lastHighestScoreValue!) {
+      return Text("New High Score: $userPoints",
+          style: const TextStyle(
+              color: Colors.blue, fontWeight: FontWeight.w800, fontSize: 20.0));
+    } else {
+      return Text("Score to beat: $_lastHighestScoreValue");
+    }
+  }
+
   Color wordColor = Colors.black;
 
   // Here we handle a users word submission.
@@ -218,87 +248,91 @@ class _GameBoardState extends State<GameBoard> {
       stopGameTimer();
       startGameTimer();
     });
+    if (userPoints > _highestScoreValue!) {
+      _storeHighestScore(userPoints);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(children: [
-          Expanded(
-              child: GridView.count(
-            primary: false,
-            padding: const EdgeInsets.all(20),
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            crossAxisCount: 4,
-            children: AnimateList(
-              children: [...letterBoxes],
-              effects: [const FlipEffect()],
-              interval: 500.ms,
+          child: Column(children: [
+        Expanded(
+            child: GridView.count(
+          primary: false,
+          padding: const EdgeInsets.all(20),
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          crossAxisCount: 4,
+          children: AnimateList(
+            children: [...letterBoxes],
+            effects: [const FlipEffect()],
+            interval: 500.ms,
+          ),
+        )),
+        Padding(
+          padding: const EdgeInsets.all(30),
+          child: OutlinedButton(
+            style: ButtonStyle(
+              backgroundColor: MaterialStatePropertyAll<Color>(
+                  Theme.of(context).colorScheme.secondary),
+              fixedSize: MaterialStateProperty.all(const Size(140.0, 50.0)),
+              // ignore: prefer_const_constructors
+              textStyle: MaterialStatePropertyAll<TextStyle>(
+                  const TextStyle(color: Colors.white)),
             ),
-          )),
-          Padding(
-            padding: const EdgeInsets.all(30),
-            child: OutlinedButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStatePropertyAll<Color>(
-                    Theme.of(context).colorScheme.secondary),
-                fixedSize: MaterialStateProperty.all(const Size(140.0, 50.0)),
-                // ignore: prefer_const_constructors
-                textStyle: MaterialStatePropertyAll<TextStyle>(
-                    const TextStyle(color: Colors.white)),
-              ),
-              onPressed: () {
-                handleSubmit();
-              },
-              child: const Text("Submit",
+            onPressed: () {
+              handleSubmit();
+            },
+            child: const Text("Submit",
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Text(
+            lettersInCurrentWord.join(""),
+            style: TextStyle(
+                fontSize: 40.0, fontWeight: FontWeight.bold, color: wordColor),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: gameOver
+              ? const Text(
+                  "GAME OVER!",
                   style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Text(
-              lettersInCurrentWord.join(""),
-              style: TextStyle(
-                  fontSize: 40.0,
-                  fontWeight: FontWeight.bold,
-                  color: wordColor),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: gameOver
-                ? const Text(
-                    "GAME OVER!",
-                    style: TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 20.0),
-                  )
-                : const Text(""),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(50.0),
-            child: gameOverImminent
-                ? Text(
-                    "$timeToGameOver",
-                    style: const TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 20.0),
-                  )
-                : const Text(""),
-          ),
-          Text(
-            "Points: $userPoints",
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
-          ),
-          Text("Speed: ${(msPerLetter / 1000).toStringAsFixed(2)} s/l"),
-        ]),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+                      color: Colors.red,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20.0),
+                )
+              : const Text(""),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: highScoreText(),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(50.0),
+          child: gameOverImminent
+              ? Text(
+                  "$timeToGameOver",
+                  style: const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20.0),
+                )
+              : const Text(""),
+        ),
+        Text(
+          "Points: $userPoints",
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+        ),
+        Text("Speed: ${(msPerLetter / 1000).toStringAsFixed(2)} s/l"),
+      ])), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
