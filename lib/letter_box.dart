@@ -24,6 +24,7 @@ typedef LetterCallBack = void Function(Letter val);
 class LetterBox extends StatefulWidget {
   String character;
   String emptyCharacter = "";
+  bool disabled = false;
 
   final LetterCallBack callback;
   bool selected = false;
@@ -34,6 +35,8 @@ class LetterBox extends StatefulWidget {
     return character == emptyIndicator;
   }
 
+  void selectedToggle() {}
+
   @override
   State<LetterBox> createState() => _LetterBoxState();
 }
@@ -41,9 +44,15 @@ class LetterBox extends StatefulWidget {
 class _LetterBoxState extends State<LetterBox> {
   int colorsValue = 100;
 
-  void selectedToggle() {
+  //void selectedToggle() {
+  //  setState(() {
+  //    widget.selected = widget.selected == false ? true : false;
+  //  });
+  //}
+
+  void toggleDisabled() {
     setState(() {
-      widget.selected = widget.selected == false ? true : false;
+      widget.disabled = widget.disabled == false ? true : false;
     });
   }
 
@@ -51,6 +60,7 @@ class _LetterBoxState extends State<LetterBox> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
+        if (widget.disabled) return;
         setState(() {
           widget.selected = widget.selected == false ? true : false;
           colorsValue = widget.selected ? 400 : 100;

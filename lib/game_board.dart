@@ -42,7 +42,7 @@ class _GameBoardState extends State<GameBoard> {
   // board fill timer
 
   // time between letter appearances in milliseconds
-  int msPerLetter = 3000;
+  int msPerLetter = 2500;
   int timeToGameOver = 20;
   int maxGameOverTimer = 20;
   int minGameOverTimer = 5;
@@ -78,6 +78,22 @@ class _GameBoardState extends State<GameBoard> {
     });
   }
 
+  void disableLetterBoxes() {
+    for (var element in letterBoxes) {
+      setState(() {
+        element.disabled = true;
+      });
+    }
+  }
+
+  void enableLetterBoxes() {
+    for (var element in letterBoxes) {
+      setState(() {
+        element.disabled = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -91,6 +107,7 @@ class _GameBoardState extends State<GameBoard> {
         timeToGameOver--;
         if (timeToGameOver <= 0) {
           gameOver = true;
+          disableLetterBoxes();
           stopGameOverTimer();
           stopGameTimer();
           gameOverImminent = false;
@@ -253,6 +270,36 @@ class _GameBoardState extends State<GameBoard> {
     }
   }
 
+  void playAgain() {
+    setState(() {
+      _prefs.then((SharedPreferences prefs) {
+        setState(() {
+          _highestScoreValue = prefs.getInt(highScoreSharedPrefKey) ?? 0;
+          _lastHighestScoreValue = _highestScoreValue;
+        });
+      });
+      userPoints = 0;
+      for (int i = 0; i < letterBoxes.length; i++) {
+        setState(() {
+          letterBoxes.replaceRange(i, i + 1, [
+            LetterBox(
+                character: "-",
+                selected: false,
+                callback: (val) => addLetterToWord(val))
+          ]);
+        });
+      }
+      gameOver = false;
+      gameOverImminent = false;
+      maxGameOverTimer = 20;
+      minGameOverTimer = 5;
+      timeToGameOver = 20;
+      msPerLetter = 2500;
+      startGameTimer();
+      stopGameOverTimer();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -265,30 +312,49 @@ class _GameBoardState extends State<GameBoard> {
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
           crossAxisCount: 4,
-          children: AnimateList(
-            children: [...letterBoxes],
-            effects: [const FlipEffect()],
-            interval: 500.ms,
-          ),
+          children: [...letterBoxes],
         )),
         Padding(
           padding: const EdgeInsets.all(30),
-          child: OutlinedButton(
-            style: ButtonStyle(
-              backgroundColor: MaterialStatePropertyAll<Color>(
-                  Theme.of(context).colorScheme.secondary),
-              fixedSize: MaterialStateProperty.all(const Size(140.0, 50.0)),
-              // ignore: prefer_const_constructors
-              textStyle: MaterialStatePropertyAll<TextStyle>(
-                  const TextStyle(color: Colors.white)),
-            ),
-            onPressed: () {
-              handleSubmit();
-            },
-            child: const Text("Submit",
-                style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
+          child: Visibility(
+              visible: gameOver != true,
+              child: OutlinedButton(
+                style: ButtonStyle(
+                  backgroundColor: MaterialStatePropertyAll<Color>(
+                      Theme.of(context).colorScheme.secondary),
+                  fixedSize: MaterialStateProperty.all(const Size(140.0, 50.0)),
+                  // ignore: prefer_const_constructors
+                  textStyle: MaterialStatePropertyAll<TextStyle>(
+                      const TextStyle(color: Colors.white)),
+                ),
+                onPressed: () {
+                  handleSubmit();
+                },
+                child: const Text("Submit",
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold)),
+              )),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(4),
+          child: Visibility(
+              visible: gameOver == true,
+              child: OutlinedButton(
+                style: ButtonStyle(
+                  backgroundColor:
+                      const MaterialStatePropertyAll<Color>(Colors.green),
+                  fixedSize: MaterialStateProperty.all(const Size(140.0, 50.0)),
+                  // ignore: prefer_const_constructors
+                  textStyle: MaterialStatePropertyAll<TextStyle>(
+                      const TextStyle(color: Colors.white)),
+                ),
+                onPressed: () {
+                  playAgain();
+                },
+                child: const Text("Play again!",
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold)),
+              )),
         ),
         Padding(
           padding: const EdgeInsets.all(10.0),
