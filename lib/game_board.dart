@@ -257,7 +257,7 @@ class _GameBoardState extends State<GameBoard> {
       }
     }
     setState(() {
-      userPoints += wordLengthPointValues[wordPointValueIndex]!;
+      userPoints += wordLengthPointValues[wordPointValueIndex] ?? 8;
       msPerLetter = msPerLetter - 100;
       wordColor = Colors.black;
       lettersInCurrentWord.clear();
@@ -295,10 +295,14 @@ class _GameBoardState extends State<GameBoard> {
       minGameOverTimer = 5;
       timeToGameOver = 20;
       msPerLetter = 2500;
+      lettersInCurrentWord.clear();
       startGameTimer();
       stopGameOverTimer();
     });
   }
+
+  String playAgainText = "Play Again!";
+  String submitText = "Submit";
 
   @override
   Widget build(BuildContext context) {
@@ -316,45 +320,27 @@ class _GameBoardState extends State<GameBoard> {
         )),
         Padding(
           padding: const EdgeInsets.all(30),
-          child: Visibility(
-              visible: gameOver != true,
-              child: OutlinedButton(
-                style: ButtonStyle(
-                  backgroundColor: MaterialStatePropertyAll<Color>(
-                      Theme.of(context).colorScheme.secondary),
-                  fixedSize: MaterialStateProperty.all(const Size(140.0, 50.0)),
-                  // ignore: prefer_const_constructors
-                  textStyle: MaterialStatePropertyAll<TextStyle>(
-                      const TextStyle(color: Colors.white)),
-                ),
-                onPressed: () {
-                  handleSubmit();
-                },
-                child: const Text("Submit",
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold)),
-              )),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(4),
-          child: Visibility(
-              visible: gameOver == true,
-              child: OutlinedButton(
-                style: ButtonStyle(
-                  backgroundColor:
-                      const MaterialStatePropertyAll<Color>(Colors.green),
-                  fixedSize: MaterialStateProperty.all(const Size(140.0, 50.0)),
-                  // ignore: prefer_const_constructors
-                  textStyle: MaterialStatePropertyAll<TextStyle>(
-                      const TextStyle(color: Colors.white)),
-                ),
-                onPressed: () {
-                  playAgain();
-                },
-                child: const Text("Play again!",
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold)),
-              )),
+          child: OutlinedButton(
+            style: ButtonStyle(
+              backgroundColor: MaterialStatePropertyAll<Color>(gameOver
+                  ? Colors.green
+                  : Theme.of(context).colorScheme.secondary),
+              fixedSize: MaterialStateProperty.all(const Size(140.0, 50.0)),
+              // ignore: prefer_const_constructors
+              textStyle: MaterialStatePropertyAll<TextStyle>(
+                  const TextStyle(color: Colors.white)),
+            ),
+            onPressed: () {
+              if (gameOver) {
+                playAgain();
+              } else {
+                handleSubmit();
+              }
+            },
+            child: Text(gameOver ? playAgainText : submitText,
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.all(10.0),
