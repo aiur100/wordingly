@@ -258,7 +258,7 @@ class _GameBoardState extends State<GameBoard> {
     }
     setState(() {
       userPoints += wordLengthPointValues[wordPointValueIndex] ?? 8;
-      msPerLetter = msPerLetter - 100;
+      msPerLetter = msPerLetter - 50;
       wordColor = Colors.black;
       lettersInCurrentWord.clear();
       stopGameOverTimer();
@@ -383,7 +383,8 @@ class _GameBoardState extends State<GameBoard> {
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
         ),
-        Text("Speed: ${(msPerLetter / 1000).toStringAsFixed(2)} s/l"),
+        Text(
+            "Letters appear every ${(msPerLetter / 1000).toStringAsFixed(2)} seconds"),
       ])), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
